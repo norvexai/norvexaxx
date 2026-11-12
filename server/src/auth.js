@@ -1,10 +1,14 @@
 import jwt from "jsonwebtoken";
 import { query } from "./db.js";
 
+const isProd = process.env.NODE_ENV === "production" || !process.env.NODE_ENV;
+// For cross-domain (Vercel frontend + Render backend), always use SameSite=None + Secure
+// iOS Safari REQUIRES secure=true when sameSite="none"
+
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite:"none" ,
+  secure: true,           // ALWAYS true for HTTPS + cross-domain
+  sameSite: "none",       // Required for Vercel ↔ Render cross-domain
   path: "/",
   maxAge: 1000 * 60 * 60 * 8
 };
@@ -15,7 +19,7 @@ export function setSession(res, user) {
 }
 
 export function clearSession(res) {
-  res.clearCookie("norvexa_session", { ...cookieOptions, maxAge: undefined });
+  res.clearCookie("norvexa_session", { ...cookieOptions, maxAge: 0 });
 }
 
 export async function requireAuth(req, res, next) {
