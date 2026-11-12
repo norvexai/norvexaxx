@@ -1,14 +1,10 @@
 import jwt from "jsonwebtoken";
 import { query } from "./db.js";
 
-const isProd = process.env.NODE_ENV === "production" || !process.env.NODE_ENV;
-// For cross-domain (Vercel frontend + Render backend), always use SameSite=None + Secure
-// iOS Safari REQUIRES secure=true when sameSite="none"
-
 const cookieOptions = {
   httpOnly: true,
-  secure: true,           // ALWAYS true for HTTPS + cross-domain
-  sameSite: "none",       // Required for Vercel ↔ Render cross-domain
+  secure: true,
+  sameSite: "none",
   path: "/",
   maxAge: 1000 * 60 * 60 * 8
 };
@@ -16,6 +12,7 @@ const cookieOptions = {
 export function setSession(res, user) {
   const token = jwt.sign({ sub: user.id }, process.env.SESSION_SECRET, { expiresIn: "8h" });
   res.cookie("norvexa_session", token, cookieOptions);
+  return token;
 }
 
 export function clearSession(res) {
@@ -24,8 +21,11 @@ export function clearSession(res) {
 
 export async function requireAuth(req, res, next) {
   try {
-    const token = req.cookies?.norvexa_session;
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.norvexa_session || (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null);
+    
     if (!token) return res.status(401).json({ error: "Please sign in." });
+    
     const payload = jwt.verify(token, process.env.SESSION_SECRET);
     const { rows } = await query(
       `SELECT id, name, email::text AS email, role FROM users WHERE id = $1`, [payload.sub]

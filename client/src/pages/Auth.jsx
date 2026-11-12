@@ -39,7 +39,8 @@ export default function Auth({ mode, onAuth }) {
             state: form.state, country: form.country, zip_code: form.zip_code
           };
       const d = await api(`/auth/${mode}`, { method: "POST", body: JSON.stringify(payload) });
-      onAuth(d.user);
+if (d.token) localStorage.setItem("norvexa_token", d.token);
+onAuth(d.user);
       nav(["ADMIN", "FINANCE", "COMPLIANCE", "TRADER"].includes(d.user.role) ? "/admin" : "/dashboard");
     } catch (err) { setError(err.message); } finally { setBusy(false); }
   }

@@ -179,8 +179,8 @@ app.post("/api/auth/login", asyncRoute(async (req, res) => {
     [user.id]
   );
 
-  setSession(res, user);
-  res.json({ user: publicUser(user) });
+ const token = setSession(res, user);
+res.json({ user: publicUser(user), token });
 }));
 
 app.post("/api/auth/logout", (_req, res) => { clearSession(res); res.json({ ok: true }); });

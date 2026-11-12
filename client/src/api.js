@@ -1,8 +1,14 @@
 const API = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+
 export async function api(path, options = {}) {
+  const token = localStorage.getItem("norvexa_token");
   const res = await fetch(`${API}${path}`, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    },
     ...options
   });
   const data = await res.json().catch(() => ({}));
